@@ -13,14 +13,15 @@ import {
   getStoredUser,
   isAuthenticated,
   type User,
+  type RegisterData,
 } from "../services/auth.mock";
 
 interface AuthContextType {
   user: User | null;
   isLogged: boolean;
   loading: boolean;
-  login: (telefono: string, password: string) => Promise<void>;
-  register: (data: { nombre: string; telefono: string; password: string }) => Promise<void>;
+  login: (phone: string, password: string) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   editarPerfil: (data: Partial<User>) => Promise<void>;
 }
@@ -31,7 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user,    setUser]    = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // AsyncStorage es async en RN → usamos await
   useEffect(() => {
     (async () => {
       const authed = await isAuthenticated();
@@ -43,12 +43,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })();
   }, []);
 
-  const login = async (telefono: string, password: string) => {
-    const { user } = await loginUser(telefono, password);
+  const login = async (phone: string, password: string) => {
+    const { user } = await loginUser(phone, password);
     setUser(user);
   };
 
-  const register = async (data: { nombre: string; telefono: string; password: string }) => {
+  const register = async (data: RegisterData) => {
     const { user } = await registerUser(data);
     setUser(user);
   };
