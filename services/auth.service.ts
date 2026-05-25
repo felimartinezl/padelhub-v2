@@ -71,6 +71,36 @@ export async function updateProfile(
   return updated;
 }
 
+// ── HU-003b: Subir foto de perfil ─────────────────────────────────────────────
+export async function uploadProfilePhoto(
+  userId: string,
+  imageUri: string
+): Promise<string> {
+  const token = await getStoredToken();
+  const BASE_URL = "https://padelhub-backend-phi.vercel.app/api";
+
+  const form = new FormData();
+  const ext  = imageUri.split(".").pop() ?? "jpg";
+  form.append("photo", {
+    uri:  imageUri,
+    name: `avatar.${ext}`,
+    type: `image/${ext === "jpg" ? "jpeg" : ext}`,
+  } as any);
+
+  const res = await fetch(`${BASE_URL}/users/${userId}/photo`, {
+    method:  "POST",
+    headers: {
+      "Content-Type":  "multipart/form-data",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: form,
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data as any)?.message ?? `Error ${res.status}`);
+  return (data as { photo_url: string }).photo_url;
+}
+
 // ── HU-004: Logout ─────────────────────────────────────────────────────────────
 export async function logoutUser(): Promise<void> {
   await AsyncStorage.multiRemove(["ph_token", "ph_user"]);

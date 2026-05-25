@@ -111,7 +111,7 @@ export default function PerfilScreen() {
 
           {/* Datos adicionales */}
           <TouchableOpacity onPress={() => router.push("/(app)/perfil-editar" as any)} style={{ alignSelf: "flex-end", marginBottom: 14 }}>
-            <Text style={{ fontSize: 13, color: C.accent, textDecorationLine: "underline" }}>Datos adicionales →</Text>
+            <Text style={{ fontSize: 13, color: C.accent, textDecorationLine: "underline" }}>Editar →</Text>
           </TouchableOpacity>
 
           {/* MMR card */}
