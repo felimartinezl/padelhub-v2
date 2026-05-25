@@ -7,7 +7,6 @@ import {
   View,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
-import { forgotPassword, resetPassword } from "../../services/auth.mock";
 import { C, S } from "../../theme";
 
 export default function LoginScreen() {
@@ -19,7 +18,6 @@ export default function LoginScreen() {
   const [pass,       setPass]       = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error,      setError]      = useState("");
-  const [showForgot, setShowForgot] = useState(false);
   const [rutFocused, setRutFocused] = useState(false);
   const [passFocused,setPassFocused]= useState(false);
 
@@ -49,8 +47,6 @@ export default function LoginScreen() {
       <ActivityIndicator color={C.accent} size="large" />
     </View>
   );
-
-  if (showForgot) return <ForgotPasswordScreen onBack={() => setShowForgot(false)} />;
 
   return (
     <KeyboardAvoidingView
@@ -135,7 +131,7 @@ export default function LoginScreen() {
 
         {/* ¿Olvidaste? */}
         <TouchableOpacity
-          onPress={() => setShowForgot(true)}
+          onPress={() => router.push("/(auth)/forgotpassword" as any)}
           style={{ alignSelf: "flex-end", marginBottom: 16 }}
         >
           <Text style={{ fontSize: 12, color: C.accent }}>¿Olvidaste tu contraseña?</Text>
@@ -166,125 +162,5 @@ export default function LoginScreen() {
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
-  );
-}
-
-// ── Recuperar contraseña (mock) ───────────────────────────────────────────────
-function ForgotPasswordScreen({ onBack }: { onBack: () => void }) {
-  const [step,      setStep]      = useState<1 | 2 | 3 | "done">(1);
-  const [tel,       setTel]       = useState("");
-  const [otp,       setOtp]       = useState("");
-  const [pass,      setPass]      = useState("");
-  const [loading,   setLoading]   = useState(false);
-  const [error,     setError]     = useState("");
-  const [countdown, setCountdown] = useState(60);
-
-  const sendOtp = async () => {
-    setError("");
-    if (!tel) { setError("Ingresa tu teléfono"); return; }
-    setLoading(true);
-    try {
-      await forgotPassword(tel);
-      setStep(2);
-      let s = 60; setCountdown(60);
-      const t = setInterval(() => { s--; setCountdown(s); if (s <= 0) clearInterval(t); }, 1000);
-    } catch (e: any) { setError(e.message); }
-    finally { setLoading(false); }
-  };
-
-  const verifyOtp = () => {
-    setError("");
-    if (otp !== "123456") { setError("Código incorrecto (usa 123456 en modo dev)"); return; }
-    setStep(3);
-  };
-
-  const resetPass = async () => {
-    setError("");
-    if (pass.length < 8) { setError("Mínimo 8 caracteres"); return; }
-    setLoading(true);
-    try { await resetPassword(tel, pass); setStep("done"); }
-    catch (e: any) { setError(e.message); }
-    finally { setLoading(false); }
-  };
-
-  return (
-    <ScrollView style={S.screen} contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 28 }}>
-      <TouchableOpacity style={[S.backBtn, { marginBottom: 24, alignSelf: "flex-start" }]} onPress={onBack}>
-        <Text style={S.backBtnText}>←</Text>
-      </TouchableOpacity>
-
-      {step === 1 && (
-        <>
-          <Text style={{ fontSize: 48, textAlign: "center", marginBottom: 12 }}>📲</Text>
-          <Text style={{ fontSize: 22, fontWeight: "700", color: C.text, textAlign: "center", marginBottom: 8 }}>
-            ¿Olvidaste tu contraseña?
-          </Text>
-          <Text style={{ fontSize: 13, color: C.text2, textAlign: "center", marginBottom: 24 }}>
-            Te enviamos un código por WhatsApp.
-          </Text>
-          {error ? <View style={S.error}><Text style={S.errorText}>⚠️ {error}</Text></View> : null}
-          <Text style={S.label}>Teléfono</Text>
-          <TextInput style={[S.input, { marginBottom: 14 }]} placeholder="+56 9 1234 5678"
-            placeholderTextColor={C.text2} value={tel} onChangeText={setTel} keyboardType="phone-pad" />
-          <TouchableOpacity style={[S.btn, loading && S.btnDisabled]} onPress={sendOtp} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={S.btnText}>Enviar código</Text>}
-          </TouchableOpacity>
-        </>
-      )}
-
-      {step === 2 && (
-        <>
-          <Text style={{ fontSize: 48, textAlign: "center", marginBottom: 12 }}>🔑</Text>
-          <Text style={{ fontSize: 22, fontWeight: "700", color: C.text, textAlign: "center", marginBottom: 8 }}>
-            Código enviado
-          </Text>
-          <View style={{ backgroundColor: "rgba(245,158,11,0.08)", borderWidth: 1, borderColor: "rgba(245,158,11,0.3)", borderRadius: 10, padding: 12, marginBottom: 16 }}>
-            <Text style={{ fontSize: 12, color: "#fcd34d" }}>🧪 Dev: usa 123456</Text>
-          </View>
-          {error ? <View style={S.error}><Text style={S.errorText}>⚠️ {error}</Text></View> : null}
-          <TextInput style={[S.input, { marginBottom: 8, fontSize: 28, textAlign: "center", letterSpacing: 8, fontWeight: "700" }]}
-            maxLength={6} placeholder="000000" placeholderTextColor={C.text2}
-            value={otp} onChangeText={(v) => setOtp(v.replace(/\D/g, ""))} keyboardType="numeric" />
-          <Text style={{ fontSize: 12, color: C.text2, textAlign: "center", marginBottom: 16 }}>
-            {countdown > 0 ? `Reenviar en ${countdown}s` : ""}
-          </Text>
-          {countdown === 0 && (
-            <TouchableOpacity onPress={sendOtp}>
-              <Text style={{ fontSize: 12, color: C.accent, textAlign: "center", marginBottom: 16 }}>Reenviar código</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity style={S.btn} onPress={verifyOtp}>
-            <Text style={S.btnText}>Verificar código</Text>
-          </TouchableOpacity>
-        </>
-      )}
-
-      {step === 3 && (
-        <>
-          <Text style={{ fontSize: 48, textAlign: "center", marginBottom: 12 }}>🔒</Text>
-          <Text style={{ fontSize: 22, fontWeight: "700", color: C.text, textAlign: "center", marginBottom: 24 }}>Nueva contraseña</Text>
-          {error ? <View style={S.error}><Text style={S.errorText}>⚠️ {error}</Text></View> : null}
-          <Text style={S.label}>Nueva contraseña</Text>
-          <TextInput style={[S.input, { marginBottom: 14 }]} placeholder="Mínimo 8 caracteres"
-            placeholderTextColor={C.text2} value={pass} onChangeText={setPass} secureTextEntry />
-          <TouchableOpacity style={[S.btn, loading && S.btnDisabled]} onPress={resetPass} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={S.btnText}>Guardar contraseña</Text>}
-          </TouchableOpacity>
-        </>
-      )}
-
-      {step === "done" && (
-        <View style={{ alignItems: "center" }}>
-          <Text style={{ fontSize: 64, marginBottom: 16 }}>✅</Text>
-          <Text style={{ fontSize: 22, fontWeight: "700", color: C.text, marginBottom: 8 }}>¡Listo!</Text>
-          <Text style={{ fontSize: 13, color: C.text2, marginBottom: 24, textAlign: "center" }}>
-            Ya puedes iniciar sesión con tu nueva contraseña.
-          </Text>
-          <TouchableOpacity style={S.btn} onPress={onBack}>
-            <Text style={S.btnText}>Ir al login</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </ScrollView>
   );
 }
