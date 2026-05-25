@@ -42,7 +42,7 @@ export async function loginUser(
 
 // ── HU-001a: Solo registrar (sin iniciar sesión) ───────────────────────────────
 export async function signUpUser(data: RegisterData): Promise<void> {
-  await apiFetch<{ message: string }>("/auth/register", {
+  await apiFetch<{ message: string }>("/users", {
     method: "POST",
     body: JSON.stringify(data),
   });
