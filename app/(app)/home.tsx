@@ -50,7 +50,7 @@ export default function HomeScreen() {
   const router           = useRouter();
 
   const initiales      = user?.name ? getInitials(user.name) : "?";
-  const proximoPartido = partidos[0] ?? null;
+  const proximoPartido = partidos.find(p => p.players.some(pl => pl.id === user?.id)) ?? null;
   const actividad      = user?.id ? (ACTIVIDAD_DEMO[user.id] ?? []) : [];
   const esNuevo        = actividad.length === 0;
 
@@ -116,13 +116,13 @@ export default function HomeScreen() {
               {parseMatchTime(proximoPartido.match_time)}
             </Text>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-              {proximoPartido.match_players.map((mp, i) => (
+              {proximoPartido.players.map((mp, i) => (
                 <View key={mp.id} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                   {proximoPartido.format === "doubles" && i === 2 && (
                     <Text style={{ fontSize: 11, color: C.text2 }}>vs</Text>
                   )}
                   <View style={[S.avatar, { width: 32, height: 32, backgroundColor: getAvatarColor(i) }]}>
-                    <Text style={[S.avatarText, { fontSize: 12 }]}>{getInitials(mp.users.name)}</Text>
+                    <Text style={[S.avatarText, { fontSize: 12 }]}>{getInitials(mp.name)}</Text>
                   </View>
                 </View>
               ))}
@@ -144,8 +144,8 @@ export default function HomeScreen() {
         <View style={S.quickGrid}>
           {[
             { icon: "🏓", title: "Crear partido", sub: "Organiza un juego",    path: "/(app)/crear"       },
-            { icon: "🎯", title: "Buscar rival",  sub: "Matchmaking MMR",      path: "/(app)/matchmaking" },
-            { icon: "🏆", title: "Ranking",       sub: `Top ${user?.zone ?? "tu zona"}`, path: "/(app)/ranking" },
+            { icon: "🎯", title: "Ver partidos",  sub: "Abiertos en tu zona",  path: "/(app)/partidos"    },
+            { icon: "✉️", title: "Invitaciones",  sub: "Partidos recibidos",             path: "/(app)/invitaciones" },
             { icon: "📊", title: "Mi perfil",     sub: "Stats y historial",    path: "/(app)/perfil"      },
           ].map((a) => (
             <TouchableOpacity key={a.title} style={S.quickCard} onPress={() => router.push(a.path as any)}>
