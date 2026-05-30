@@ -1,5 +1,5 @@
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -16,23 +16,28 @@ export default function HomeScreen() {
   const router           = useRouter();
   const [misActivos, setMisActivos] = useState<Partido[]>([]);
 
-  useEffect(() => {
-    if (!user?.id) return;
-    (async () => {
-      try {
-        const [inProgress, confirmed] = await Promise.all([
-          listMatches({ zone: user.zone ?? undefined, status: "in_progress" }),
-          listMatches({ zone: user.zone ?? undefined, status: "confirmed" }),
-        ]);
-        const all = [...inProgress, ...confirmed];
-        setMisActivos(all.filter(m =>
-          m.players.some(p => p.id === user.id) || m.organizer?.id === user.id
-        ));
-      } catch {
-        // keep existing state
-      }
-    })();
-  }, [user?.id, user?.zone]);
+  useFocusEffect(
+    useCallback(() => {
+      if (!user?.id) return;
+      let cancelled = false;
+      (async () => {
+        try {
+          const [inProgress, confirmed] = await Promise.all([
+            listMatches({ zone: user.zone ?? undefined, status: "in_progress" }),
+            listMatches({ zone: user.zone ?? undefined, status: "confirmed" }),
+          ]);
+          if (cancelled) return;
+          const all = [...inProgress, ...confirmed];
+          setMisActivos(all.filter(m =>
+            m.players.some(p => p.id === user.id) || m.organizer?.id === user.id
+          ));
+        } catch {
+          // keep existing state
+        }
+      })();
+      return () => { cancelled = true; };
+    }, [user?.id, user?.zone])
+  );
 
   const proximoPartido: Partido | null =
     misActivos[0] ??
