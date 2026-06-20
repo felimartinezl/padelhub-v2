@@ -36,6 +36,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user,    setUser]    = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  async function registerPushTokenForUser(rut: number) {
+    try {
+      const token = await getPushToken();
+      if (token) {
+        await registerDeviceToken(rut, token);
+      }
+    } catch (error) {
+      console.error("No se pudo registrar el token push", error);
+    }
+  }
+
   useEffect(() => {
     (async () => {
       try {
@@ -44,9 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const stored = await getStoredUser();
           setUser(stored);
           if (stored?.rut) {
-            getPushToken()
-              .then((token) => { if (token) registerDeviceToken(stored.rut!, token); })
-              .catch(() => {});
+            await registerPushTokenForUser(stored.rut);
           }
         }
       } catch {
@@ -61,9 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { user } = await loginUser(rut, password);
     setUser(user);
     if (user.rut) {
-      getPushToken()
-        .then((token) => { if (token) registerDeviceToken(user.rut!, token); })
-        .catch(() => {});
+      await registerPushTokenForUser(user.rut);
     }
   };
 
@@ -71,9 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { user } = await registerUser(data);
     setUser(user);
     if (user.rut) {
-      getPushToken()
-        .then((token) => { if (token) registerDeviceToken(user.rut!, token); })
-        .catch(() => {});
+      await registerPushTokenForUser(user.rut);
     }
   };
 
